@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import core
 
 subparser_config = {
     'new': {
@@ -47,3 +48,9 @@ for key, value in subparser_config.items():
         parser_key.add_argument(argument)
     subparsers.parsers[key] = parser_key
 args = parser.parse_args()
+
+fun = getattr(core, args.subparser)
+if 'package' in dir(args):
+    fun(args.package)
+else:
+    fun()
