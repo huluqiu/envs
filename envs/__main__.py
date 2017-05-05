@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import commands
+from . import commands
 
 
 subparser_config = {
@@ -52,11 +52,12 @@ def main():
         subparsers.parsers[key] = parser_key
     args = parser.parse_args()
 
-    fun = getattr(commands, args.subparser)
-    if 'package' in dir(args):
-        fun(args.package)
-    else:
-        fun()
+    if args.subparser:
+        fun = getattr(commands, args.subparser)
+        if 'package' in dir(args):
+            fun(args.package)
+        else:
+            fun()
 
 
 if __name__ == "__main__":
