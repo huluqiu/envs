@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-import core
+import commands
+
 
 subparser_config = {
     'new': {
@@ -39,18 +40,24 @@ subparser_config = {
     },
 }
 
-parser = argparse.ArgumentParser()
-subparsers = parser.add_subparsers(dest='subparser')
-subparsers.parsers = {}
-for key, value in subparser_config.items():
-    parser_key = subparsers.add_parser(key, help=value['help'])
-    for argument in value['arguments']:
-        parser_key.add_argument(argument)
-    subparsers.parsers[key] = parser_key
-args = parser.parse_args()
 
-fun = getattr(core, args.subparser)
-if 'package' in dir(args):
-    fun(args.package)
-else:
-    fun()
+def main():
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest='subparser')
+    subparsers.parsers = {}
+    for key, value in subparser_config.items():
+        parser_key = subparsers.add_parser(key, help=value['help'])
+        for argument in value['arguments']:
+            parser_key.add_argument(argument)
+        subparsers.parsers[key] = parser_key
+    args = parser.parse_args()
+
+    fun = getattr(commands, args.subparser)
+    if 'package' in dir(args):
+        fun(args.package)
+    else:
+        fun()
+
+
+if __name__ == "__main__":
+    main()
