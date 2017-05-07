@@ -7,36 +7,36 @@ from . import commands
 
 subparser_config = {
     'new': {
-        'help': 'new package',
-        'arguments': ['package'],
+        'help': 'new poke',
+        'arguments': ['poke'],
     },
     'delete': {
-        'help': 'delete package',
-        'arguments': ['package'],
+        'help': 'delete poke',
+        'arguments': ['poke'],
     },
     'install': {
-        'help': 'install package',
-        'arguments': ['package'],
+        'help': 'install poke',
+        'arguments': ['poke'],
     },
     'uninstall': {
-        'help': 'uninstall package',
-        'arguments': ['package'],
+        'help': 'uninstall poke',
+        'arguments': ['poke'],
     },
     'sync': {
         'help': 'sync',
         'arguments': [],
     },
     'edit': {
-        'help': 'edit package',
-        'arguments': ['package'],
+        'help': 'edit poke',
+        'arguments': ['poke'],
     },
     'list': {
-        'help': 'list all packages',
+        'help': 'list all pokes',
         'arguments': [],
     },
     'info': {
-        'help': 'show package info',
-        'arguments': ['package'],
+        'help': 'show poke info',
+        'arguments': ['poke'],
     },
 }
 
@@ -54,8 +54,8 @@ def main():
 
     if args.subparser:
         fun = getattr(commands, args.subparser)
-        if 'package' in dir(args):
-            fun(args.package)
+        if 'poke' in dir(args):
+            fun(args.poke)
         else:
             fun()
 
