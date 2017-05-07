@@ -1,6 +1,5 @@
 import os
 import subprocess
-import shutil
 
 HOME = os.environ.get('HOME')
 ROOTPATH = os.path.join(HOME, '.envs')
@@ -24,12 +23,8 @@ def geteditor():
     return os.getenv('EDITOR')
 
 
-def get_packagepath(package):
-    return os.path.join(ROOTPATH, package)
-
-
-def get_configpath(package):
-    return os.path.join(get_packagepath(package), package + '.py')
+def get_pokepath(poke):
+    return os.path.join(ROOTPATH, poke)
 
 
 def runshell(cmd):
@@ -42,37 +37,37 @@ def runshell(cmd):
     subprocess.run(cmd, shell=True)
 
 
-def new(package):
+def new(poke):
     """TODO: Docstring for new.
 
-    :package: TODO
+    :poke: TODO
     :returns: TODO
 
     """
-    os.makedirs(get_packagepath(package), exist_ok=True)
     templatepath = os.path.abspath(__file__)
     templatepath = os.path.dirname(templatepath)
     templatepath = os.path.join(templatepath, 'template.py')
-    configpath = get_configpath(package)
-    runshell('cp %s %s' % (templatepath, configpath))
-    runshell('%s %s' % (geteditor(), configpath))
+    pokepath = get_pokepath(poke)
+    if not os.path.exists(pokepath):
+        runshell('cp %s %s' % (templatepath, pokepath))
+    runshell('%s %s' % (geteditor(), pokepath))
 
 
-def delete(package):
+def delete(poke):
     """TODO: Docstring for delete.
 
-    :package: TODO
+    :poke: TODO
     :returns: TODO
 
     """
-    packagepath = get_packagepath(package)
-    if not os.path.exists(packagepath):
-        echo('%s does not exist!' % package)
+    pokepath = get_pokepath(poke)
+    if not os.path.exists(pokepath):
+        echo('%s does not exist!' % poke)
         return
-    verify = confirm('Are you sure you want to delete %s' % package)
+    verify = confirm('Are you sure you want to delete %s' % poke)
     if not verify:
         return
-    shutil.rmtree(packagepath)
+    os.remove(pokepath)
 
 
 def list():
@@ -81,35 +76,36 @@ def list():
 
     """
     msg = ''
-    for package in os.listdir(ROOTPATH):
-        msg += '%s\t' % package
-    echo(msg)
+    for poke in os.listdir(ROOTPATH):
+        msg += '%s\t' % poke
+    if msg:
+        echo(msg)
 
 
-def edit(package):
+def edit(poke):
     """TODO: Docstring for edit.
 
-    :package: TODO
+    :poke: TODO
     :returns: TODO
 
     """
-    new(package)
+    new(poke)
 
 
-def install(package):
+def install(poke):
     """TODO: Docstring for install.
 
-    :package: TODO
+    :poke: TODO
     :returns: TODO
 
     """
     pass
 
 
-def uninstall(package):
+def uninstall(poke):
     """TODO: Docstring for uninstall.
 
-    :package: TODO
+    :poke: TODO
     :returns: TODO
 
     """
@@ -124,10 +120,10 @@ def sync():
     pass
 
 
-def info(package):
+def info(poke):
     """TODO: Docstring for info.
 
-    :package: TODO
+    :poke: TODO
     :returns: TODO
 
     """
