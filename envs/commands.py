@@ -6,16 +6,16 @@ HOME = os.environ.get('HOME')
 ROOTPATH = os.path.join(HOME, '.envs')
 
 
-def error(msg):
-    print('error: %s' % msg)
-
-
-def prompt(msg):
+def echo(msg):
     print(msg)
 
 
+def error(msg):
+    echo('error: %s' % msg)
+
+
 def confirm(msg):
-    print('%s?(y/n)' % msg, end='')
+    echo('%s?(y/n)' % msg, end='')
     verify = input()
     return True if verify == 'y' else False
 
@@ -67,12 +67,23 @@ def delete(package):
     """
     packagepath = get_packagepath(package)
     if not os.path.exists(packagepath):
-        prompt('%s does not exist!' % package)
+        echo('%s does not exist!' % package)
         return
     verify = confirm('Are you sure you want to delete %s' % package)
     if not verify:
         return
     shutil.rmtree(packagepath)
+
+
+def list():
+    """TODO: Docstring for list.
+    :returns: TODO
+
+    """
+    msg = ''
+    for package in os.listdir(ROOTPATH):
+        msg += '%s\t' % package
+    echo(msg)
 
 
 def install(package):
@@ -107,14 +118,6 @@ def edit(package):
     """TODO: Docstring for edit.
 
     :package: TODO
-    :returns: TODO
-
-    """
-    pass
-
-
-def list():
-    """TODO: Docstring for list.
     :returns: TODO
 
     """
