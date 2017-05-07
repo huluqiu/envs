@@ -6,8 +6,8 @@ HOME = os.environ.get('HOME')
 ROOTPATH = os.path.join(HOME, '.envs')
 
 
-def echo(msg):
-    print(msg)
+def echo(msg, **kwargs):
+    print(msg, **kwargs)
 
 
 def error(msg):
@@ -86,6 +86,16 @@ def list():
     echo(msg)
 
 
+def edit(package):
+    """TODO: Docstring for edit.
+
+    :package: TODO
+    :returns: TODO
+
+    """
+    new(package)
+
+
 def install(package):
     """TODO: Docstring for install.
 
@@ -108,16 +118,6 @@ def uninstall(package):
 
 def sync():
     """TODO: Docstring for sync.
-    :returns: TODO
-
-    """
-    pass
-
-
-def edit(package):
-    """TODO: Docstring for edit.
-
-    :package: TODO
     :returns: TODO
 
     """
