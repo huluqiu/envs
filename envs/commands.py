@@ -1,5 +1,6 @@
 import os
 import subprocess
+import json
 
 HOME = os.environ.get('HOME')
 ROOTPATH = os.path.join(HOME, '.envs')
@@ -24,17 +25,16 @@ def geteditor():
 
 
 def get_pokepath(poke):
-    return os.path.join(ROOTPATH, poke)
+    return os.path.join(ROOTPATH, poke) + '.json'
 
 
 def runshell(cmd):
-    """TODO: Docstring for runshell.
-
-    :shell: TODO
-    :returns: TODO
-
-    """
     subprocess.run(cmd, shell=True)
+
+
+def getpokename(poke):
+    name, ext = os.path.splitext(poke)
+    return name if ext == '.json' else None
 
 
 def new(poke):
@@ -44,12 +44,14 @@ def new(poke):
     :returns: TODO
 
     """
-    templatepath = os.path.abspath(__file__)
-    templatepath = os.path.dirname(templatepath)
-    templatepath = os.path.join(templatepath, 'template.py')
     pokepath = get_pokepath(poke)
     if not os.path.exists(pokepath):
-        runshell('cp %s %s' % (templatepath, pokepath))
+        config = {}
+        config['description'] = poke
+        config['install'] = ''
+        config['uninstall'] = ''
+        with open(pokepath, 'w') as f:
+            f.write(json.dumps(config, indent=2))
     runshell('%s %s' % (geteditor(), pokepath))
 
 
@@ -77,7 +79,9 @@ def list():
     """
     msg = ''
     for poke in os.listdir(ROOTPATH):
-        msg += '%s\t' % poke
+        name = getpokename(poke)
+        if name:
+            msg += '%s\t' % name
     if msg:
         echo(msg)
 
