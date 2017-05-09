@@ -1,9 +1,14 @@
 import os
 import subprocess
 import json
+import sys
 
 HOME = os.environ.get('HOME')
 ROOTPATH = os.path.join(HOME, '.envs')
+
+
+def runshell(cmd):
+    subprocess.run(cmd, shell=True)
 
 
 def echo(msg, **kwargs):
@@ -28,8 +33,11 @@ def get_pokepath(poke):
     return os.path.join(ROOTPATH, poke) + '.json'
 
 
-def runshell(cmd):
-    subprocess.run(cmd, shell=True)
+def checkpath(poke):
+    path = get_pokepath(poke)
+    if not os.path.exists(path):
+        echo('%s does not exist!' % poke)
+        sys.exit()
 
 
 def getpokename(poke):
@@ -51,7 +59,7 @@ def new(poke):
         config['install'] = ''
         config['uninstall'] = ''
         with open(pokepath, 'w') as f:
-            f.write(json.dumps(config, indent=2))
+            json.dump(config, f, indent=2)
     runshell('%s %s' % (geteditor(), pokepath))
 
 
@@ -62,10 +70,8 @@ def delete(poke):
     :returns: TODO
 
     """
+    checkpath(poke)
     pokepath = get_pokepath(poke)
-    if not os.path.exists(pokepath):
-        echo('%s does not exist!' % poke)
-        return
     verify = confirm('Are you sure you want to delete %s' % poke)
     if not verify:
         return
@@ -96,6 +102,23 @@ def edit(poke):
     new(poke)
 
 
+def info(poke):
+    """TODO: Docstring for info.
+
+    :poke: TODO
+    :returns: TODO
+
+    """
+    checkpath(poke)
+    pokepath = get_pokepath(poke)
+    with open(pokepath, 'r') as f:
+        config = json.load(f)
+    #  TODO: pretty print #
+    description = config.get('description', None)
+    if description:
+        echo(description)
+
+
 def install(poke):
     """TODO: Docstring for install.
 
@@ -118,16 +141,6 @@ def uninstall(poke):
 
 def sync():
     """TODO: Docstring for sync.
-    :returns: TODO
-
-    """
-    pass
-
-
-def info(poke):
-    """TODO: Docstring for info.
-
-    :poke: TODO
     :returns: TODO
 
     """
