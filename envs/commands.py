@@ -56,8 +56,8 @@ def new(poke):
     if not os.path.exists(pokepath):
         config = {}
         config['description'] = poke
-        config['install'] = ''
-        config['uninstall'] = ''
+        config['install'] = []
+        config['uninstall'] = []
         with open(pokepath, 'w') as f:
             json.dump(config, f, indent=2)
     runshell('%s %s' % (geteditor(), pokepath))
