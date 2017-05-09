@@ -11,6 +11,14 @@ def runshell(cmd):
     subprocess.run(cmd, shell=True)
 
 
+def run(cmds):
+    if isinstance(cmds, list):
+        for c in cmds:
+            runshell(c)
+    else:
+        runshell(cmds)
+
+
 def echo(msg, **kwargs):
     print(msg, **kwargs)
 
@@ -73,7 +81,7 @@ def new(poke):
         config['uninstall'] = []
         with open(pokepath, 'w') as f:
             json.dump(config, f, indent=2)
-    runshell('%s %s' % (geteditor(), pokepath))
+    run('%s %s' % (geteditor(), pokepath))
 
 
 def delete(poke):
@@ -91,7 +99,7 @@ def delete(poke):
     os.remove(pokepath)
 
 
-def list():
+def show_list():
     """TODO: Docstring for list.
     :returns: TODO
 
@@ -140,8 +148,7 @@ def install(poke):
     checkpath(poke)
     config = getconfig(poke)
     cmds = config.get('install', [])
-    for cmd in cmds:
-        runshell(cmd)
+    run(cmds)
 
 
 def uninstall(poke):
@@ -151,7 +158,10 @@ def uninstall(poke):
     :returns: TODO
 
     """
-    pass
+    checkpath(poke)
+    config = getconfig(poke)
+    cmds = config.get('uninstall', [])
+    run(cmds)
 
 
 def sync():

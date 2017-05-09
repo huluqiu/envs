@@ -32,6 +32,7 @@ subparser_config = {
     },
     'list': {
         'help': 'list all pokes',
+        'func': 'show_list',
         'arguments': [],
     },
     'info': {
@@ -53,7 +54,8 @@ def main():
     args = parser.parse_args()
 
     if args.subparser:
-        fun = getattr(commands, args.subparser)
+        func = subparser_config.get(args.subparser).get('func', args.subparser)
+        fun = getattr(commands, func)
         if 'poke' in dir(args):
             fun(args.poke)
         else:
