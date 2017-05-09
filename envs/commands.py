@@ -40,6 +40,19 @@ def checkpath(poke):
         sys.exit()
 
 
+def getconfig(poke):
+    pokepath = get_pokepath(poke)
+    with open(pokepath, 'r') as f:
+        try:
+            config = json.load(f)
+        except json.JSONDecodeError as e:
+            echo('%s illegal' % poke)
+            echo(e)
+            sys.exit()
+        else:
+            return config
+
+
 def getpokename(poke):
     name, ext = os.path.splitext(poke)
     return name if ext == '.json' else None
@@ -110,9 +123,7 @@ def info(poke):
 
     """
     checkpath(poke)
-    pokepath = get_pokepath(poke)
-    with open(pokepath, 'r') as f:
-        config = json.load(f)
+    config = getconfig(poke)
     #  TODO: pretty print #
     description = config.get('description', None)
     if description:
@@ -127,9 +138,7 @@ def install(poke):
 
     """
     checkpath(poke)
-    pokepath = get_pokepath(poke)
-    with open(pokepath, 'r') as f:
-        config = json.load(f)
+    config = getconfig(poke)
     cmds = config.get('install', [])
     for cmd in cmds:
         runshell(cmd)
