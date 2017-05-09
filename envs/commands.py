@@ -126,7 +126,13 @@ def install(poke):
     :returns: TODO
 
     """
-    pass
+    checkpath(poke)
+    pokepath = get_pokepath(poke)
+    with open(pokepath, 'r') as f:
+        config = json.load(f)
+    cmds = config.get('install', [])
+    for cmd in cmds:
+        runshell(cmd)
 
 
 def uninstall(poke):
