@@ -1,7 +1,7 @@
 import os
 import subprocess
-import json
 import sys
+import yaml
 
 HOME = os.environ.get('HOME')
 ROOTPATH = os.path.join(HOME, '.envs')
@@ -38,7 +38,7 @@ def geteditor():
 
 
 def get_pokepath(poke):
-    return os.path.join(ROOTPATH, poke) + '.json'
+    return os.path.join(ROOTPATH, poke) + '.yaml'
 
 
 def checkpath(poke):
@@ -52,8 +52,8 @@ def getconfig(poke):
     pokepath = get_pokepath(poke)
     with open(pokepath, 'r') as f:
         try:
-            config = json.load(f)
-        except json.JSONDecodeError as e:
+            config = yaml.load(f)
+        except yaml.ScannerError as e:
             echo('%s illegal' % poke)
             echo(e)
             sys.exit()
@@ -63,7 +63,7 @@ def getconfig(poke):
 
 def getpokename(poke):
     name, ext = os.path.splitext(poke)
-    return name if ext == '.json' else None
+    return name if ext == '.yaml' else None
 
 
 def new(poke):
@@ -80,7 +80,7 @@ def new(poke):
         config['install'] = []
         config['uninstall'] = []
         with open(pokepath, 'w') as f:
-            json.dump(config, f, indent=2)
+            yaml.dump(config, f, default_flow_style=False)
     run('%s %s' % (geteditor(), pokepath))
 
 
