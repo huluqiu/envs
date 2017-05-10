@@ -10,61 +10,57 @@ HOME = os.environ.get('HOME')
 ROOTPATH = os.path.join(HOME, '.envs')
 
 
-def runshell(cmd):
+def _runshell(cmd):
     subprocess.run(cmd, shell=True)
 
 
-def run(cmds):
+def _run(cmds):
     if isinstance(cmds, list):
         for c in cmds:
-            runshell(c)
+            _runshell(c)
     else:
-        runshell(cmds)
+        _runshell(cmds)
 
 
-def echo(msg, **kwargs):
+def _echo(msg, **kwargs):
     print(msg, **kwargs)
 
 
-def error(msg):
-    echo('error: %s' % msg)
-
-
-def confirm(msg):
-    echo('%s?(y/n)' % msg, end='')
+def _confirm(msg):
+    _echo('%s?(y/n)' % msg, end='')
     verify = input()
     return True if verify == 'y' else False
 
 
-def geteditor():
+def _geteditor():
     return os.getenv('EDITOR')
 
 
-def get_pokepath(poke):
+def _get_pokepath(poke):
     return os.path.join(ROOTPATH, poke) + '.yaml'
 
 
-def checkpath(poke):
-    path = get_pokepath(poke)
+def _checkpath(poke):
+    path = _get_pokepath(poke)
     if not os.path.exists(path):
-        echo('%s does not exist!' % poke)
+        _echo('%s does not exist!' % poke)
         sys.exit()
 
 
-def getconfig(poke):
-    pokepath = get_pokepath(poke)
+def _getconfig(poke):
+    pokepath = _get_pokepath(poke)
     with open(pokepath, 'r') as f:
         try:
             config = yaml.load(f)
         except yaml.ScannerError as e:
-            echo('%s illegal' % poke)
-            echo(e)
+            _echo('%s illegal' % poke)
+            _echo(e)
             sys.exit()
         else:
             return config
 
 
-def getpokename(poke):
+def _getpokename(poke):
     name, ext = os.path.splitext(poke)
     return name if ext == '.yaml' else None
 
@@ -76,7 +72,7 @@ def new(poke):
     :returns: TODO
 
     """
-    pokepath = get_pokepath(poke)
+    pokepath = _get_pokepath(poke)
     if not os.path.exists(pokepath):
         config = {}
         config['description'] = poke
@@ -84,7 +80,7 @@ def new(poke):
         config['uninstall'] = []
         with open(pokepath, 'w') as f:
             yaml.dump(config, f, default_flow_style=False)
-    run('%s %s' % (geteditor(), pokepath))
+    _run('%s %s' % (_geteditor(), pokepath))
 
 
 def delete(poke):
@@ -94,9 +90,9 @@ def delete(poke):
     :returns: TODO
 
     """
-    checkpath(poke)
-    pokepath = get_pokepath(poke)
-    verify = confirm('Are you sure you want to delete %s' % poke)
+    _checkpath(poke)
+    pokepath = _get_pokepath(poke)
+    verify = _confirm('Are you sure you want to delete %s' % poke)
     if not verify:
         return
     os.remove(pokepath)
@@ -109,11 +105,11 @@ def show_list():
     """
     msg = ''
     for poke in os.listdir(ROOTPATH):
-        name = getpokename(poke)
+        name = _getpokename(poke)
         if name:
             msg += '%s\t' % name
     if msg:
-        echo(msg)
+        _echo(msg)
 
 
 def edit(poke):
@@ -133,12 +129,12 @@ def info(poke):
     :returns: TODO
 
     """
-    checkpath(poke)
-    config = getconfig(poke)
+    _checkpath(poke)
+    config = _getconfig(poke)
     #  TODO: pretty print #
     description = config.get('description', None)
     if description:
-        echo(description)
+        _echo(description)
 
 
 def install(poke):
@@ -148,10 +144,10 @@ def install(poke):
     :returns: TODO
 
     """
-    checkpath(poke)
-    config = getconfig(poke)
+    _checkpath(poke)
+    config = _getconfig(poke)
     cmds = config.get('install', [])
-    run(cmds)
+    _run(cmds)
 
 
 def uninstall(poke):
@@ -161,10 +157,10 @@ def uninstall(poke):
     :returns: TODO
 
     """
-    checkpath(poke)
-    config = getconfig(poke)
+    _checkpath(poke)
+    config = _getconfig(poke)
     cmds = config.get('uninstall', [])
-    run(cmds)
+    _run(cmds)
 
 
 def sync():
