@@ -1,7 +1,10 @@
 import os
 import subprocess
 import sys
-import yaml
+if sys.version_info.major == 3:
+    from .packages import yaml3 as yaml
+else:
+    from .packages import yaml2 as yaml
 
 HOME = os.environ.get('HOME')
 ROOTPATH = os.path.join(HOME, '.envs')
