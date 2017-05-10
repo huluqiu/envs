@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+import shutil
 if sys.version_info.major == 3:
     from .packages import yaml3 as yaml
 else:
@@ -65,6 +66,23 @@ def _getpokename(poke):
     return name if ext == '.yaml' else None
 
 
+def _checkinstall(poke):
+    _checkpath(poke)
+    config = _getconfig(poke)
+    check = config.get('check', [])
+    rs = False
+    for con in check:
+        if con.find('/') == -1:
+            # cmd
+            con = shutil.which(con)
+        if con.startswith('~'):
+            con = con.replace('~', HOME)
+        rs = os.path.exists(con)
+        if not rs:
+            return False
+    return True
+
+
 def new(poke):
     """TODO: Docstring for new.
 
@@ -75,6 +93,7 @@ def new(poke):
     pokepath = _get_pokepath(poke)
     if not os.path.exists(pokepath):
         config = {}
+        config['name'] = poke
         config['description'] = poke
         config['install'] = []
         config['uninstall'] = []
@@ -146,6 +165,9 @@ def install(poke):
     """
     _checkpath(poke)
     config = _getconfig(poke)
+    if _checkinstall(poke):
+        _echo('%s already installed' % poke)
+        sys.exit()
     cmds = config.get('install', [])
     _run(cmds)
 
@@ -159,6 +181,9 @@ def uninstall(poke):
     """
     _checkpath(poke)
     config = _getconfig(poke)
+    if not _checkinstall(poke):
+        _echo('%s does not installed' % poke)
+        sys.exit()
     cmds = config.get('uninstall', [])
     _run(cmds)
 
