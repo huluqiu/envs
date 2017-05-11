@@ -240,7 +240,15 @@ def uninstall(formula):
     _run(cmds)
 
 
-def config(item, value):
+def config(**kwargs):
+    if kwargs['l']:
+        _run('cat %s' % CONFIGPATH)
+        sys.exit()
+    item = kwargs['item']
+    value = kwargs['value']
+    if not item or not value:
+        _run('%s %s' % (_geteditor(), CONFIGPATH))
+        sys.exit()
     rs = _iteminconfig(item)
     if not rs:
         _echo('not support %s' % item)

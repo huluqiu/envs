@@ -5,60 +5,92 @@ import argparse
 from . import commands
 
 
+command_new = {
+    'help': 'new formula',
+    'arguments': [
+        {'name': 'formula'}
+    ]
+}
+
+command_delete = {
+    'help': 'delete formula',
+    'arguments': [
+        {'name': 'formula'}
+    ]
+}
+
+command_edit = {
+    'help': 'edit formula',
+    'arguments': [
+        {'name': 'formula'}
+    ]
+}
+
+command_info = {
+    'help': 'show formula info',
+    'arguments': [
+        {'name': 'formula'}
+    ]
+}
+
+command_list = {
+    'help': 'list all formulas',
+    'func': 'show_list',
+    'arguments': []
+}
+
+command_install = {
+    'help': 'install formula',
+    'arguments': [
+        {'name': 'formula'}
+    ]
+}
+
+command_uninstall = {
+    'help': 'uninstall formula',
+    'arguments': [
+        {'name': 'formula'}
+    ]
+}
+
+command_sync = {
+    'help': 'sync',
+    'arguments': []
+}
+
+command_config = {
+    'help': 'config',
+    'arguments': [
+        {'name': 'item', 'nargs': '?'},
+        {'name': 'value', 'nargs': '?'},
+        {'name': '-l', 'action': 'store_true', 'help': 'show config'}
+    ]
+}
+
 subparser_config = {
-    'new': {
-        'help': 'new formula',
-        'arguments': ['formula'],
-    },
-    'delete': {
-        'help': 'delete formula',
-        'arguments': ['formula'],
-    },
-    'install': {
-        'help': 'install formula',
-        'arguments': ['formula'],
-    },
-    'uninstall': {
-        'help': 'uninstall formula',
-        'arguments': ['formula'],
-    },
-    'sync': {
-        'help': 'sync',
-        'arguments': [],
-    },
-    'edit': {
-        'help': 'edit formula',
-        'arguments': ['formula'],
-    },
-    'list': {
-        'help': 'list all formulas',
-        'func': 'show_list',
-        'arguments': [],
-    },
-    'info': {
-        'help': 'show formula info',
-        'arguments': ['formula'],
-    },
-    'config': {
-        'help': 'config',
-        'arguments': ['item', 'value'],
-    }
+    'new': command_new,
+    'delete': command_delete,
+    'edit': command_edit,
+    'info': command_info,
+    'list': command_list,
+    'install': command_install,
+    'uninstall': command_uninstall,
+    'sync': command_sync,
+    'config': command_config,
 }
 
 
 def main():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='subparser')
-    subparsers.parsers = {}
-    for key, value in subparser_config.items():
-        parser_key = subparsers.add_parser(key, help=value['help'])
-        for argument in value['arguments']:
-            parser_key.add_argument(argument)
-        subparsers.parsers[key] = parser_key
+    for cmd, config in subparser_config.items():
+        subparser = subparsers.add_parser(cmd, help=config['help'])
+        for argument in config['arguments']:
+            argname = argument.pop('name')
+            subparser.add_argument(argname, **argument)
     args = parser.parse_args()
-
     if args.subparser:
-        func = subparser_config.get(args.subparser).get('func', args.subparser)
+        func = subparser_config[args.subparser].get('func', args.subparser)
         fun = getattr(commands, func)
         args = vars(args)
         args.pop('subparser', None)
