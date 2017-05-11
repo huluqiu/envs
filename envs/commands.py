@@ -2,13 +2,20 @@ import os
 import subprocess
 import sys
 import shutil
+import configparser
 if sys.version_info.major == 3:
     from .packages import yaml3 as yaml
 else:
     from .packages import yaml2 as yaml
 
 HOME = os.environ.get('HOME')
-ROOTPATH = os.path.join(HOME, '.envs')
+CONFIGPATH = os.path.join(HOME, '.envs.conf')
+DEFAULTCONFIG = {
+    'core': {
+        'formulalib': os.path.join(HOME, '.envs/formulas'),
+        'syncfile': os.path.join(HOME, '.envs/envs.sync'),
+    }
+}
 
 
 def _runshell(cmd):
@@ -37,8 +44,56 @@ def _geteditor():
     return os.getenv('EDITOR')
 
 
+def _readconfig():
+    if not os.path.exists(CONFIGPATH):
+        _run('touch %s' % CONFIGPATH)
+    config = configparser.ConfigParser()
+    config.read(CONFIGPATH)
+    return config
+
+
+def _writeconfig(section, key, value):
+    config = _readconfig()
+    if section not in config.sections():
+        config[section] = {}
+    config[section][key] = value
+    with open(CONFIGPATH, 'w') as f:
+        config.write(f)
+
+
+def _iteminconfig(item):
+    """TODO: Docstring for _iteminconfig.
+
+    :item: 'section.key'
+    :returns: (section, key) when exists; None when not exists
+
+    """
+    status = True
+    try:
+        section, key = item.split('.')
+    except ValueError:
+        status = False
+    else:
+        if section not in DEFAULTCONFIG.keys():
+            status = False
+        else:
+            if key not in DEFAULTCONFIG[section].keys():
+                status = False
+    return (section, key) if status else None
+
+
+def _formulalib():
+    config = _readconfig()
+    section, key = _iteminconfig('core.formulalib')
+    default = DEFAULTCONFIG['core']['formulalib']
+    formulalib = config.get(section, key, fallback=default)
+    if not os.path.exists(formulalib):
+        os.mkdir(formulalib)
+    return formulalib
+
+
 def _get_formulapath(formula):
-    return os.path.join(ROOTPATH, formula) + '.yaml'
+    return os.path.join(_formulalib(), formula) + '.yaml'
 
 
 def _checkpath(formula):
@@ -92,13 +147,12 @@ def new(formula):
     """
     formulapath = _get_formulapath(formula)
     if not os.path.exists(formulapath):
-        formula = {}
-        formula['name'] = formula
-        formula['description'] = formula
-        formula['install'] = []
-        formula['uninstall'] = []
+        formuladic = {}
+        formuladic['description'] = formula
+        formuladic['install'] = []
+        formuladic['uninstall'] = []
         with open(formulapath, 'w') as f:
-            yaml.dump(formula, f, default_flow_style=False)
+            yaml.dump(formuladic, f, default_flow_style=False)
     _run('%s %s' % (_geteditor(), formulapath))
 
 
@@ -123,7 +177,7 @@ def show_list():
 
     """
     msg = ''
-    for formula in os.listdir(ROOTPATH):
+    for formula in os.listdir(_formulalib()):
         name = _getformulaname(formula)
         if name:
             msg += '%s\t' % name
@@ -163,11 +217,10 @@ def install(formula):
     :returns: TODO
 
     """
-    _checkpath(formula)
-    formula = _readformula(formula)
     if _checkinstall(formula):
         _echo('%s already installed' % formula)
         sys.exit()
+    formula = _readformula(formula)
     cmds = formula.get('install', [])
     _run(cmds)
 
@@ -179,13 +232,21 @@ def uninstall(formula):
     :returns: TODO
 
     """
-    _checkpath(formula)
-    formula = _readformula(formula)
     if not _checkinstall(formula):
         _echo('%s does not installed' % formula)
         sys.exit()
+    formula = _readformula(formula)
     cmds = formula.get('uninstall', [])
     _run(cmds)
+
+
+def config(item, value):
+    rs = _iteminconfig(item)
+    if not rs:
+        _echo('not support %s' % item)
+    else:
+        section, key = rs
+        _writeconfig(section, key, value)
 
 
 def sync():

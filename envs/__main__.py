@@ -39,6 +39,10 @@ subparser_config = {
         'help': 'show formula info',
         'arguments': ['formula'],
     },
+    'config': {
+        'help': 'config',
+        'arguments': ['item', 'value'],
+    }
 }
 
 
@@ -56,10 +60,9 @@ def main():
     if args.subparser:
         func = subparser_config.get(args.subparser).get('func', args.subparser)
         fun = getattr(commands, func)
-        if 'formula' in dir(args):
-            fun(args.formula)
-        else:
-            fun()
+        args = vars(args)
+        args.pop('subparser', None)
+        fun(**args)
 
 
 if __name__ == "__main__":
