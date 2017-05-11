@@ -61,9 +61,7 @@ command_sync = {
 command_config = {
     'help': 'config',
     'arguments': [
-        {'name': 'item', 'nargs': '?'},
-        {'name': 'value', 'nargs': '?'},
-        {'name': '-l', 'action': 'store_true', 'help': 'show config'}
+        {'name': '-l', 'action': 'store_true', 'help': 'show config'},
     ]
 }
 
