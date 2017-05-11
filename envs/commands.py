@@ -37,39 +37,39 @@ def _geteditor():
     return os.getenv('EDITOR')
 
 
-def _get_pokepath(poke):
-    return os.path.join(ROOTPATH, poke) + '.yaml'
+def _get_formulapath(formula):
+    return os.path.join(ROOTPATH, formula) + '.yaml'
 
 
-def _checkpath(poke):
-    path = _get_pokepath(poke)
+def _checkpath(formula):
+    path = _get_formulapath(formula)
     if not os.path.exists(path):
-        _echo('%s does not exist!' % poke)
+        _echo('%s does not exist!' % formula)
         sys.exit()
 
 
-def _getconfig(poke):
-    pokepath = _get_pokepath(poke)
-    with open(pokepath, 'r') as f:
+def _readformula(formula):
+    formulapath = _get_formulapath(formula)
+    with open(formulapath, 'r') as f:
         try:
-            config = yaml.load(f)
+            formula = yaml.load(f)
         except yaml.ScannerError as e:
-            _echo('%s illegal' % poke)
+            _echo('%s illegal' % formula)
             _echo(e)
             sys.exit()
         else:
-            return config
+            return formula
 
 
-def _getpokename(poke):
-    name, ext = os.path.splitext(poke)
+def _getformulaname(formula):
+    name, ext = os.path.splitext(formula)
     return name if ext == '.yaml' else None
 
 
-def _checkinstall(poke):
-    _checkpath(poke)
-    config = _getconfig(poke)
-    check = config.get('check', [])
+def _checkinstall(formula):
+    _checkpath(formula)
+    formula = _readformula(formula)
+    check = formula.get('check', [])
     rs = False
     for con in check:
         if con.find('/') == -1:
@@ -83,38 +83,38 @@ def _checkinstall(poke):
     return True
 
 
-def new(poke):
+def new(formula):
     """TODO: Docstring for new.
 
-    :poke: TODO
+    :formula: TODO
     :returns: TODO
 
     """
-    pokepath = _get_pokepath(poke)
-    if not os.path.exists(pokepath):
-        config = {}
-        config['name'] = poke
-        config['description'] = poke
-        config['install'] = []
-        config['uninstall'] = []
-        with open(pokepath, 'w') as f:
-            yaml.dump(config, f, default_flow_style=False)
-    _run('%s %s' % (_geteditor(), pokepath))
+    formulapath = _get_formulapath(formula)
+    if not os.path.exists(formulapath):
+        formula = {}
+        formula['name'] = formula
+        formula['description'] = formula
+        formula['install'] = []
+        formula['uninstall'] = []
+        with open(formulapath, 'w') as f:
+            yaml.dump(formula, f, default_flow_style=False)
+    _run('%s %s' % (_geteditor(), formulapath))
 
 
-def delete(poke):
+def delete(formula):
     """TODO: Docstring for delete.
 
-    :poke: TODO
+    :formula: TODO
     :returns: TODO
 
     """
-    _checkpath(poke)
-    pokepath = _get_pokepath(poke)
-    verify = _confirm('Are you sure you want to delete %s' % poke)
+    _checkpath(formula)
+    formulapath = _get_formulapath(formula)
+    verify = _confirm('Are you sure you want to delete %s' % formula)
     if not verify:
         return
-    os.remove(pokepath)
+    os.remove(formulapath)
 
 
 def show_list():
@@ -123,68 +123,68 @@ def show_list():
 
     """
     msg = ''
-    for poke in os.listdir(ROOTPATH):
-        name = _getpokename(poke)
+    for formula in os.listdir(ROOTPATH):
+        name = _getformulaname(formula)
         if name:
             msg += '%s\t' % name
     if msg:
         _echo(msg)
 
 
-def edit(poke):
+def edit(formula):
     """TODO: Docstring for edit.
 
-    :poke: TODO
+    :formula: TODO
     :returns: TODO
 
     """
-    new(poke)
+    new(formula)
 
 
-def info(poke):
+def info(formula):
     """TODO: Docstring for info.
 
-    :poke: TODO
+    :formula: TODO
     :returns: TODO
 
     """
-    _checkpath(poke)
-    config = _getconfig(poke)
+    _checkpath(formula)
+    formula = _readformula(formula)
     #  TODO: pretty print #
-    description = config.get('description', None)
+    description = formula.get('description', None)
     if description:
         _echo(description)
 
 
-def install(poke):
+def install(formula):
     """TODO: Docstring for install.
 
-    :poke: TODO
+    :formula: TODO
     :returns: TODO
 
     """
-    _checkpath(poke)
-    config = _getconfig(poke)
-    if _checkinstall(poke):
-        _echo('%s already installed' % poke)
+    _checkpath(formula)
+    formula = _readformula(formula)
+    if _checkinstall(formula):
+        _echo('%s already installed' % formula)
         sys.exit()
-    cmds = config.get('install', [])
+    cmds = formula.get('install', [])
     _run(cmds)
 
 
-def uninstall(poke):
+def uninstall(formula):
     """TODO: Docstring for uninstall.
 
-    :poke: TODO
+    :formula: TODO
     :returns: TODO
 
     """
-    _checkpath(poke)
-    config = _getconfig(poke)
-    if not _checkinstall(poke):
-        _echo('%s does not installed' % poke)
+    _checkpath(formula)
+    formula = _readformula(formula)
+    if not _checkinstall(formula):
+        _echo('%s does not installed' % formula)
         sys.exit()
-    cmds = config.get('uninstall', [])
+    cmds = formula.get('uninstall', [])
     _run(cmds)
 
 

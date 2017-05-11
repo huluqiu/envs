@@ -7,37 +7,37 @@ from . import commands
 
 subparser_config = {
     'new': {
-        'help': 'new poke',
-        'arguments': ['poke'],
+        'help': 'new formula',
+        'arguments': ['formula'],
     },
     'delete': {
-        'help': 'delete poke',
-        'arguments': ['poke'],
+        'help': 'delete formula',
+        'arguments': ['formula'],
     },
     'install': {
-        'help': 'install poke',
-        'arguments': ['poke'],
+        'help': 'install formula',
+        'arguments': ['formula'],
     },
     'uninstall': {
-        'help': 'uninstall poke',
-        'arguments': ['poke'],
+        'help': 'uninstall formula',
+        'arguments': ['formula'],
     },
     'sync': {
         'help': 'sync',
         'arguments': [],
     },
     'edit': {
-        'help': 'edit poke',
-        'arguments': ['poke'],
+        'help': 'edit formula',
+        'arguments': ['formula'],
     },
     'list': {
-        'help': 'list all pokes',
+        'help': 'list all formulas',
         'func': 'show_list',
         'arguments': [],
     },
     'info': {
-        'help': 'show poke info',
-        'arguments': ['poke'],
+        'help': 'show formula info',
+        'arguments': ['formula'],
     },
 }
 
@@ -56,8 +56,8 @@ def main():
     if args.subparser:
         func = subparser_config.get(args.subparser).get('func', args.subparser)
         fun = getattr(commands, func)
-        if 'poke' in dir(args):
-            fun(args.poke)
+        if 'formula' in dir(args):
+            fun(args.formula)
         else:
             fun()
 
