@@ -8,7 +8,8 @@ if sys.version_info.major == 3:
 else:
     from .packages import yaml2 as yaml
 
-HOME = os.environ.get('HOME')
+HOME = os.getenv('HOME')
+EDITOR = os.getenv('EDITOR')
 CONFIGPATH = os.path.join(HOME, '.envs.conf')
 DEFAULTCONFIG = {
     'core': {
@@ -38,10 +39,6 @@ def _confirm(msg):
     _echo('%s?(y/n)' % msg, end='')
     verify = input()
     return True if verify == 'y' else False
-
-
-def _geteditor():
-    return os.getenv('EDITOR')
 
 
 def _readconfig():
@@ -153,7 +150,7 @@ def new(formula):
         formuladic['uninstall'] = []
         with open(formulapath, 'w') as f:
             yaml.dump(formuladic, f, default_flow_style=False)
-    _run('%s %s' % (_geteditor(), formulapath))
+    _run('%s %s' % (EDITOR, formulapath))
 
 
 def delete(formula):
@@ -219,10 +216,10 @@ def install(formula):
     """
     if _checkinstall(formula):
         _echo('%s already installed' % formula)
-        sys.exit()
-    formula = _readformula(formula)
-    cmds = formula.get('install', [])
-    _run(cmds)
+    else:
+        formula = _readformula(formula)
+        cmds = formula.get('install', [])
+        _run(cmds)
 
 
 def uninstall(formula):
@@ -234,17 +231,17 @@ def uninstall(formula):
     """
     if not _checkinstall(formula):
         _echo('%s does not installed' % formula)
-        sys.exit()
-    formula = _readformula(formula)
-    cmds = formula.get('uninstall', [])
-    _run(cmds)
+    else:
+        formula = _readformula(formula)
+        cmds = formula.get('uninstall', [])
+        _run(cmds)
 
 
 def config(**kwargs):
     if kwargs['l']:
         _run('cat %s' % CONFIGPATH)
     else:
-        _run('%s %s' % (_geteditor(), CONFIGPATH))
+        _run('%s %s' % (EDITOR, CONFIGPATH))
 
 
 def sync():
