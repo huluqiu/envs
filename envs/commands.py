@@ -15,6 +15,7 @@ DEFAULTCONFIG = {
     'core': {
         'formulalib': os.path.join(HOME, '.envs/formulas'),
         'syncfile': os.path.join(HOME, '.envs/envs.sync'),
+        'backup': os.path.join(HOME, '.envs/backup'),
     }
 }
 
@@ -70,7 +71,7 @@ def _writeconfig(section, key, value):
         config.write(f)
 
 
-def _iteminconfig(item):
+def _isitemlegal(item):
     """TODO: Docstring for _iteminconfig.
 
     :item: 'section.key'
@@ -91,15 +92,26 @@ def _iteminconfig(item):
     return (section, key) if status else None
 
 
+def _getitem(item, config=_readconfig()):
+    section, key = item.split('.')
+    default = DEFAULTCONFIG[section][key]
+    return config.get(section, key, fallback=default)
+
+
 def _formulalib():
-    config = _readconfig()
-    section, key = _iteminconfig('core.formulalib')
-    default = DEFAULTCONFIG['core']['formulalib']
-    formulalib = config.get(section, key, fallback=default)
+    formulalib = _getitem('core.formulalib')
     formulalib = _absolutepath(formulalib)
     if not os.path.exists(formulalib):
         os.makedirs(formulalib, exist_ok=True)
     return formulalib
+
+
+def _backup():
+    backup = _getitem('core.backup')
+    backup = _absolutepath(backup)
+    if not os.path.exists(backup):
+        os.makedirs(backup, exist_ok=True)
+    return backup
 
 
 def _get_formulapath(formula):
@@ -133,6 +145,10 @@ def _checkinstall(formuladic):
         if not rs:
             return False
     return True
+
+
+def _needlink(source, target):
+    return os.path.exists(source) and not os.path.islink(target)
 
 
 def new(formula):
@@ -219,12 +235,26 @@ def install(**kwargs):
             _echo('%s does not exist!' % formula)
         else:
             formuladic = _readformula(formulapath)
-            if formuladic:
-                if _checkinstall(formuladic):
-                    _echo('%s already installed' % formula)
-                else:
-                    cmds = formuladic.get('install', [])
-                    _run(cmds)
+            if not formuladic:
+                return
+            # run install cmds
+            if _checkinstall(formuladic):
+                _echo('%s already installed' % formula)
+            else:
+                cmds = formuladic.get('install', [])
+                _run(cmds)
+            # link config file
+            links = formuladic['link']
+            for target, source in links.items():
+                source = _absolutepath(source)
+                target = _absolutepath(target)
+                if _needlink(source, target):
+                    if os.path.exists(target):
+                        backuppath = os.path.join(_backup(), formula)
+                        os.makedirs(backuppath, exist_ok=True)
+                        backuppath = os.path.join(backuppath, os.path.basename(target))
+                        os.rename(target, backuppath)
+                    os.symlink(source, target)
 
 
 def uninstall(**kwargs):
@@ -234,12 +264,20 @@ def uninstall(**kwargs):
             _echo('%s does not exist!' % formula)
         else:
             formuladic = _readformula(formulapath)
-            if formuladic:
-                if not _checkinstall(formuladic):
-                    _echo('%s does not installed' % formula)
-                else:
-                    cmds = formuladic.get('uninstall', [])
-                    _run(cmds)
+            if not formuladic:
+                return
+            # run uninstall cmds
+            if not _checkinstall(formuladic):
+                _echo('%s does not installed' % formula)
+            else:
+                cmds = formuladic.get('uninstall', [])
+                _run(cmds)
+            # unlink config file
+            links = formuladic['link']
+            for target, _ in links.items():
+                target = _absolutepath(target)
+                if os.path.islink(target):
+                    os.remove(target)
 
 
 def config(**kwargs):
@@ -254,4 +292,5 @@ def sync():
     :returns: TODO
 
     """
-    pass
+    # read syncfile
+    # install or uninstall
