@@ -42,14 +42,14 @@ command_list = {
 command_install = {
     'help': 'install formula',
     'arguments': [
-        {'name': 'formula'}
+        {'name': 'formulas', 'nargs': '*'}
     ]
 }
 
 command_uninstall = {
     'help': 'uninstall formula',
     'arguments': [
-        {'name': 'formula'}
+        {'name': 'formulas', 'nargs': '*'}
     ]
 }
 

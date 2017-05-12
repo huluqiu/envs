@@ -93,35 +93,23 @@ def _get_formulapath(formula):
     return os.path.join(_formulalib(), formula) + '.yaml'
 
 
-def _checkpath(formula):
-    path = _get_formulapath(formula)
-    if not os.path.exists(path):
-        _echo('%s does not exist!' % formula)
-        sys.exit()
-
-
-def _readformula(formula):
-    formulapath = _get_formulapath(formula)
+def _readformula(formulapath):
     with open(formulapath, 'r') as f:
         try:
-            formula = yaml.load(f)
+            formuladic = yaml.load(f)
         except yaml.ScannerError as e:
-            _echo('%s illegal' % formula)
             _echo(e)
-            sys.exit()
         else:
-            return formula
+            return formuladic
 
 
-def _getformulaname(formula):
-    name, ext = os.path.splitext(formula)
+def _getformulaname(filename):
+    name, ext = os.path.splitext(filename)
     return name if ext == '.yaml' else None
 
 
-def _checkinstall(formula):
-    _checkpath(formula)
-    formula = _readformula(formula)
-    check = formula.get('check', [])
+def _checkinstall(formuladic):
+    check = formuladic.get('check', [])
     rs = False
     for con in check:
         if con.find('/') == -1:
@@ -160,12 +148,13 @@ def delete(formula):
     :returns: TODO
 
     """
-    _checkpath(formula)
     formulapath = _get_formulapath(formula)
-    verify = _confirm('Are you sure you want to delete %s' % formula)
-    if not verify:
-        return
-    os.remove(formulapath)
+    if not os.path.exists(formulapath):
+        _echo('%s does not exist!' % formula)
+    else:
+        verify = _confirm('Are you sure you want to delete %s' % formula)
+        if verify:
+            os.remove(formulapath)
 
 
 def show_list():
@@ -199,42 +188,46 @@ def info(formula):
     :returns: TODO
 
     """
-    _checkpath(formula)
-    formula = _readformula(formula)
-    #  TODO: pretty print #
-    description = formula.get('description', None)
-    if description:
-        _echo(description)
-
-
-def install(formula):
-    """TODO: Docstring for install.
-
-    :formula: TODO
-    :returns: TODO
-
-    """
-    if _checkinstall(formula):
-        _echo('%s already installed' % formula)
+    formulapath = _get_formulapath(formula)
+    if not os.path.exists(formulapath):
+        _echo('%s does not exist!' % formula)
     else:
-        formula = _readformula(formula)
-        cmds = formula.get('install', [])
-        _run(cmds)
+        formuladic = _readformula(formulapath)
+        if formuladic:
+            #  TODO: pretty print #
+            description = formuladic.get('description', None)
+            if description:
+                _echo(description)
 
 
-def uninstall(formula):
-    """TODO: Docstring for uninstall.
+def install(**kwargs):
+    for formula in kwargs['formulas']:
+        formulapath = _get_formulapath(formula)
+        if not os.path.exists(formulapath):
+            _echo('%s does not exist!' % formula)
+        else:
+            formuladic = _readformula(formulapath)
+            if formuladic:
+                if _checkinstall(formuladic):
+                    _echo('%s already installed' % formula)
+                else:
+                    cmds = formuladic.get('install', [])
+                    _run(cmds)
 
-    :formula: TODO
-    :returns: TODO
 
-    """
-    if not _checkinstall(formula):
-        _echo('%s does not installed' % formula)
-    else:
-        formula = _readformula(formula)
-        cmds = formula.get('uninstall', [])
-        _run(cmds)
+def uninstall(**kwargs):
+    for formula in kwargs['formulas']:
+        formulapath = _get_formulapath(formula)
+        if not os.path.exists(formulapath):
+            _echo('%s does not exist!' % formula)
+        else:
+            formuladic = _readformula(formulapath)
+            if formuladic:
+                if not _checkinstall(formuladic):
+                    _echo('%s does not installed' % formula)
+                else:
+                    cmds = formuladic.get('uninstall', [])
+                    _run(cmds)
 
 
 def config(**kwargs):
