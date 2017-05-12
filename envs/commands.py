@@ -41,6 +41,18 @@ def _confirm(msg):
     return True if verify == 'y' else False
 
 
+def _absolutepath(path):
+    """convert path such as '~/.envs' to '/Users/username/.envs'
+
+    :path: TODO
+    :returns: TODO
+
+    """
+    if path.startswith('~'):
+        path = path.replace('~', HOME)
+    return path
+
+
 def _readconfig():
     if not os.path.exists(CONFIGPATH):
         _run('touch %s' % CONFIGPATH)
@@ -84,8 +96,9 @@ def _formulalib():
     section, key = _iteminconfig('core.formulalib')
     default = DEFAULTCONFIG['core']['formulalib']
     formulalib = config.get(section, key, fallback=default)
+    formulalib = _absolutepath(formulalib)
     if not os.path.exists(formulalib):
-        os.mkdir(formulalib)
+        os.makedirs(formulalib, exist_ok=True)
     return formulalib
 
 
@@ -115,8 +128,7 @@ def _checkinstall(formuladic):
         if con.find('/') == -1:
             # cmd
             con = shutil.which(con)
-        if con.startswith('~'):
-            con = con.replace('~', HOME)
+        con = _absolutepath(con)
         rs = os.path.exists(con)
         if not rs:
             return False
