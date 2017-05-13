@@ -16,6 +16,7 @@ DEFAULTCONFIG = {
         'formulalib': os.path.join(HOME, '.envs/formulas'),
         'syncfile': os.path.join(HOME, '.envs/envs.sync'),
         'backup': os.path.join(HOME, '.envs/backup'),
+        'localsync': os.path.join(HOME, '.envs/sync.local'),
     }
 }
 
@@ -151,6 +152,20 @@ def _needlink(source, target):
     return os.path.exists(source) and not os.path.islink(target)
 
 
+def _readlinesfromfile(path):
+    if not os.path.exists(path):
+        _run('touch %s' % path)
+    with open(path, 'r') as f:
+        lines = f.readlines()
+    return lines
+
+
+def _uniquelist(l):
+    n = list(set(l))
+    n.sort(l.index)
+    return n
+
+
 def new(formula):
     """TODO: Docstring for new.
 
@@ -243,6 +258,13 @@ def install(**kwargs):
             else:
                 cmds = formuladic.get('install', [])
                 _run(cmds)
+                if _checkinstall(formuladic):
+                    with open(_getitem('core.localsync'), 'a') as f:
+                        f.write('%s\n' % formula)
+                    needsync = kwargs.get('sync', True)
+                    if needsync:
+                        with open(_getitem('core.syncfile'), 'a') as f:
+                            f.write('%s\n' % formula)
             # link config file
             links = formuladic['link']
             for target, source in links.items():
@@ -272,6 +294,19 @@ def uninstall(**kwargs):
             else:
                 cmds = formuladic.get('uninstall', [])
                 _run(cmds)
+                if not _checkinstall(formuladic):
+                    localpath = _getitem('core.localsync')
+                    formulas_local = _readlinesfromfile(localpath)
+                    formulas_local.remove('%s\n' % formula)
+                    with open(localpath, 'w') as f:
+                        f.writelines(formulas_local)
+                    needsync = kwargs.get('sync', True)
+                    if needsync:
+                        syncpath = _getitem('core.syncfile')
+                        formulas_sync = _readlinesfromfile(syncpath)
+                        formulas_sync.remove('%s\n' % formula)
+                        with open(syncpath, 'w') as f:
+                            f.writelines(formulas_sync)
             # unlink config file
             links = formuladic['link']
             for target, _ in links.items():
@@ -293,4 +328,20 @@ def sync():
 
     """
     # read syncfile
+    syncpath = _getitem('core.syncfile')
+    formulas_sync = _readlinesfromfile(syncpath)
+    localpath = _getitem('core.locasync')
+    formulas_local = _readlinesfromfile(localpath)
     # install or uninstall
+    install_formulas = list(set(formulas_sync) - set(formulas_local))
+    formulas = map(lambda n: n.replace('\n', ''), install_formulas)
+    install(formulas=formulas, sync=False)
+    uninstall_formulas = list(set(formulas_local) - set(formulas_sync))
+    formulas = map(lambda n: n.replace('\n', ''), uninstall_formulas)
+    uninstall(formulas=formulas, sync=False)
+    formulas_local = _readlinesfromfile(localpath)
+    # check
+    if formulas_local == formulas_sync:
+        _echo('sync succeed!')
+    else:
+        _echo('sync failed!')
