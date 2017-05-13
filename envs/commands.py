@@ -178,8 +178,7 @@ def new(formula):
         formuladic['install'] = []
         formuladic['uninstall'] = []
         formuladic['link'] = []
-        with open(formulapath, 'w') as f:
-            yaml.dump(formuladic, f, default_flow_style=False)
+        tools.yamldump(formuladic, formulapath)
     _run('%s %s' % (EDITOR, formulapath))
 
 
