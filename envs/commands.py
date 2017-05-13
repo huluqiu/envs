@@ -141,6 +141,8 @@ def _checkinstall(formuladic):
         if con.find('/') == -1:
             # cmd
             con = shutil.which(con)
+        if not con:
+            return False
         con = _absolutepath(con)
         rs = os.path.exists(con)
         if not rs:
@@ -240,7 +242,8 @@ def info(formula):
             #  TODO: pretty print #
             description = formuladic.get('description', None)
             if description:
-                _echo(description)
+                _echo('%s: %s' % (formula, description))
+            _echo('installed: %s' % _checkinstall(formuladic))
 
 
 def link(**kwargs):
@@ -252,7 +255,7 @@ def link(**kwargs):
             formuladic = _readformula(formulapath)
             if not formuladic:
                 return
-            links = formuladic['link']
+            links = formuladic.get('link', {})
             for target, source in links.items():
                 source = _absolutepath(source)
                 target = _absolutepath(target)
@@ -274,7 +277,7 @@ def unlink(**kwargs):
             formuladic = _readformula(formulapath)
             if not formuladic:
                 return
-            links = formuladic['link']
+            links = formuladic.get('link', {})
             for target, _ in links.items():
                 target = _absolutepath(target)
                 if os.path.islink(target):
