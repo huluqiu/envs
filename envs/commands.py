@@ -7,13 +7,13 @@ HOME = os.getenv('HOME')
 EDITOR = os.getenv('EDITOR')
 CONFIGPATH = os.path.join(HOME, '.envs.conf')
 ZSHRCPATH = os.path.join(HOME, '.zshrc')
+ENVSLIB = os.path.join(HOME, '.envs')
 DEFAULTCONFIG = {
     'core': {
-        'formulalib': os.path.join(HOME, '.envs/formulas'),
-        'backup': os.path.join(HOME, '.envs/backup'),
-        'syncfile': os.path.join(HOME, '.envs/envs.sync'),
-        'localsync': os.path.join(HOME, '.envs/envs.local'),
-        'zshlib': os.path.join(HOME, '.envs/zshlib'),
+        'formulalib': os.path.join(ENVSLIB, 'formulas'),
+        'backup': os.path.join(ENVSLIB, 'backup'),
+        'localsync': os.path.join(ENVSLIB, 'envs.local'),
+        'configlib': os.path.join(ENVSLIB, 'configlib'),
     }
 }
 
