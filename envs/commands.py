@@ -7,12 +7,14 @@ from . import tools
 HOME = os.getenv('HOME')
 EDITOR = os.getenv('EDITOR')
 CONFIGPATH = os.path.join(HOME, '.envs.conf')
+ZSHRCPATH = os.path.join(HOME, '.zshrc')
 DEFAULTCONFIG = {
     'core': {
         'formulalib': os.path.join(HOME, '.envs/formulas'),
-        'syncfile': os.path.join(HOME, '.envs/envs.sync'),
         'backup': os.path.join(HOME, '.envs/backup'),
+        'syncfile': os.path.join(HOME, '.envs/envs.sync'),
         'localsync': os.path.join(HOME, '.envs/envs.local'),
+        'zshlib': os.path.join(HOME, '.envs/zshlib'),
     }
 }
 
@@ -95,24 +97,16 @@ def _getitem(item, config=_readconfig()):
     return config.get(section, key, fallback=default)
 
 
-def _formulalib():
-    formulalib = _getitem('core.formulalib')
-    formulalib = _absolutepath(formulalib)
-    if not os.path.exists(formulalib):
-        os.makedirs(formulalib, exist_ok=True)
-    return formulalib
-
-
-def _backup():
-    backup = _getitem('core.backup')
-    backup = _absolutepath(backup)
-    if not os.path.exists(backup):
-        os.makedirs(backup, exist_ok=True)
-    return backup
+def _path(item):
+    path = _getitem(item)
+    path = _absolutepath(path)
+    if not os.path.exists(path):
+        os.makedirs(path, exist_ok=True)
+    return path
 
 
 def _get_formulapath(formula):
-    return os.path.join(_formulalib(), formula) + '.yaml'
+    return os.path.join(_path('core.formulalib'), formula) + '.yaml'
 
 
 def _readformula(formulapath):
@@ -131,6 +125,8 @@ def _getformulaname(filename):
 
 def _checkinstall(formuladic):
     check = formuladic.get('check', [])
+    if not check:
+        return False
     rs = False
     for con in check:
         if con.find('/') == -1:
@@ -204,7 +200,7 @@ def show_list():
 
     """
     msg = ''
-    for formula in os.listdir(_formulalib()):
+    for formula in os.listdir(_path('core.formulalib')):
         name = _getformulaname(formula)
         if name:
             msg += '%s\t' % name
@@ -257,7 +253,7 @@ def link(**kwargs):
                 target = _absolutepath(target)
                 if _needlink(source, target):
                     if os.path.exists(target):
-                        backuppath = os.path.join(_backup(), formula)
+                        backuppath = os.path.join(_path('core.backup'), formula)
                         os.makedirs(backuppath, exist_ok=True)
                         backuppath = os.path.join(backuppath, os.path.basename(target))
                         os.rename(target, backuppath)
@@ -280,6 +276,50 @@ def unlink(**kwargs):
                     os.remove(target)
 
 
+def zsh(**kwargs):
+    for formula in kwargs['formulas']:
+        formulapath = _get_formulapath(formula)
+        if not os.path.exists(formulapath):
+            _echo('%s does not exist!' % formula)
+        else:
+            formuladic = _readformula(formulapath)
+            if not formuladic:
+                return
+            zshconfigs = formuladic.get('zsh', [])
+            zshconfigs = list(map(lambda n: n + '\n', zshconfigs))
+            zshlib = _path('core.zshlib')
+            formulazshrc = os.path.join(zshlib, '%s.zshrc' % formula)
+            with open(formulazshrc, 'w') as f:
+                f.writelines(zshconfigs)
+            with open(ZSHRCPATH, 'a') as f:
+                f.write('source %s\n' % formulazshrc)
+
+
+def unzsh(**kwargs):
+    for formula in kwargs['formulas']:
+        formulapath = _get_formulapath(formula)
+        if not os.path.exists(formulapath):
+            _echo('%s does not exist!' % formula)
+        else:
+            formuladic = _readformula(formulapath)
+            if not formuladic:
+                return
+            zshlib = _path('core.zshlib')
+            formulazshrc = os.path.join(zshlib, '%s.zshrc' % formula)
+            if os.path.exists(formulazshrc):
+                os.remove(formulazshrc)
+            content = 'source %s\n' % formulazshrc
+            with open(ZSHRCPATH, 'r') as f:
+                zshrc = f.readlines()
+            try:
+                zshrc.remove(content)
+            except ValueError:
+                return
+            else:
+                with open(ZSHRCPATH, 'w') as f:
+                    f.writelines(zshrc)
+
+
 def install(**kwargs):
     for formula in kwargs['formulas']:
         formulapath = _get_formulapath(formula)
@@ -297,7 +337,9 @@ def install(**kwargs):
                 _run(cmds)
                 # link config file
                 link(formulas=[formula])
-                # write to file
+                # zsh
+                zsh(formulas=[formula])
+                # write to sync file
                 if _checkinstall(formuladic):
                     with open(_getitem('core.localsync'), 'a') as f:
                         f.write('%s\n' % formula)
@@ -324,7 +366,9 @@ def uninstall(**kwargs):
                 _run(cmds)
                 # unlink config file
                 unlink(formulas=[formula])
-                # write to file
+                # unzsh
+                unzsh(formulas=[formula])
+                # write to sync file
                 if not _checkinstall(formuladic):
                     localpath = _getitem('core.localsync')
                     formulas_local = _readlinesfromfile(localpath)
@@ -370,3 +414,7 @@ def sync():
         _echo('sync succeed!')
     else:
         _echo('sync failed!')
+
+
+def test():
+    _run('zsh -c "source ~/.zshrc"')
