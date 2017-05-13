@@ -1,5 +1,7 @@
 import sys
 from collections import OrderedDict
+import subprocess
+import os
 
 if sys.version_info.major == 3:
     from .packages import yaml3 as yaml
@@ -41,3 +43,23 @@ def yamldump(d, path):
     d = OrderedDict(d)
     with open(path, 'w') as f:
         yaml.dump(d, f, default_flow_style=False)
+
+
+def runshell(cmds):
+    if not isinstance(cmds, list):
+        cmds = [cmds]
+    for cmd in cmds:
+        subprocess.run(cmd, shell=True)
+
+
+def absolutepath(path):
+    """convert path such as '~/.envs' to '/Users/username/.envs'
+
+    :path: TODO
+    :returns: TODO
+
+    """
+    homepath = os.getenv('HOME')
+    if path.startswith('~'):
+        path = path.replace('~', homepath)
+    return path

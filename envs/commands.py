@@ -1,5 +1,4 @@
 import os
-import subprocess
 import shutil
 import configparser
 from . import tools
@@ -19,18 +18,6 @@ DEFAULTCONFIG = {
 }
 
 
-def _runshell(cmd):
-    subprocess.run(cmd, shell=True)
-
-
-def _run(cmds):
-    if isinstance(cmds, list):
-        for c in cmds:
-            _runshell(c)
-    else:
-        _runshell(cmds)
-
-
 def _echo(msg, **kwargs):
     print(msg, **kwargs)
 
@@ -41,21 +28,9 @@ def _confirm(msg):
     return True if verify == 'y' else False
 
 
-def _absolutepath(path):
-    """convert path such as '~/.envs' to '/Users/username/.envs'
-
-    :path: TODO
-    :returns: TODO
-
-    """
-    if path.startswith('~'):
-        path = path.replace('~', HOME)
-    return path
-
-
 def _readconfig():
     if not os.path.exists(CONFIGPATH):
-        _run('touch %s' % CONFIGPATH)
+        tools.runshell('touch %s' % CONFIGPATH)
     config = configparser.ConfigParser()
     config.read(CONFIGPATH)
     return config
@@ -99,7 +74,7 @@ def _getitem(item, config=_readconfig()):
 
 def _path(item):
     path = _getitem(item)
-    path = _absolutepath(path)
+    path = tools.absolutepath(path)
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
     return path
@@ -134,7 +109,7 @@ def _checkinstall(formuladic):
             con = shutil.which(con)
         if not con:
             return False
-        con = _absolutepath(con)
+        con = tools.absolutepath(con)
         rs = os.path.exists(con)
         if not rs:
             return False
@@ -147,7 +122,7 @@ def _needlink(source, target):
 
 def _readlinesfromfile(path):
     if not os.path.exists(path):
-        _run('touch %s' % path)
+        tools.runshell('touch %s' % path)
     with open(path, 'r') as f:
         lines = f.readlines()
     return lines
@@ -175,7 +150,7 @@ def new(formula):
         formuladic['uninstall'] = []
         formuladic['link'] = []
         tools.yamldump(formuladic, formulapath)
-    _run('%s %s' % (EDITOR, formulapath))
+    tools.runshell('%s %s' % (EDITOR, formulapath))
 
 
 def delete(formula):
@@ -249,8 +224,8 @@ def link(**kwargs):
                 return
             links = formuladic.get('link', {})
             for target, source in links.items():
-                source = _absolutepath(source)
-                target = _absolutepath(target)
+                source = tools.absolutepath(source)
+                target = tools.absolutepath(target)
                 if _needlink(source, target):
                     if os.path.exists(target):
                         backuppath = os.path.join(_path('core.backup'), formula)
@@ -271,7 +246,7 @@ def unlink(**kwargs):
                 return
             links = formuladic.get('link', {})
             for target, _ in links.items():
-                target = _absolutepath(target)
+                target = tools.absolutepath(target)
                 if os.path.islink(target):
                     os.remove(target)
 
@@ -334,7 +309,7 @@ def install(**kwargs):
                 _echo('%s already installed' % formula)
             else:
                 cmds = formuladic.get('install', [])
-                _run(cmds)
+                tools.runshell(cmds)
                 # link config file
                 link(formulas=[formula])
                 # zsh
@@ -363,7 +338,7 @@ def uninstall(**kwargs):
                 _echo('%s does not installed' % formula)
             else:
                 cmds = formuladic.get('uninstall', [])
-                _run(cmds)
+                tools.runshell(cmds)
                 # unlink config file
                 unlink(formulas=[formula])
                 # unzsh
@@ -386,9 +361,9 @@ def uninstall(**kwargs):
 
 def config(**kwargs):
     if kwargs['l']:
-        _run('cat %s' % CONFIGPATH)
+        tools.runshell('cat %s' % CONFIGPATH)
     else:
-        _run('%s %s' % (EDITOR, CONFIGPATH))
+        tools.runshell('%s %s' % (EDITOR, CONFIGPATH))
 
 
 def sync():
@@ -417,4 +392,4 @@ def sync():
 
 
 def test():
-    _run('zsh -c "source ~/.zshrc"')
+    tools.runshell('zsh -c "source ~/.zshrc"')
