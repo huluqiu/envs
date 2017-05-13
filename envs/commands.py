@@ -128,19 +128,7 @@ def _readlinesfromfile(path):
     return lines
 
 
-def _uniquelist(l):
-    n = list(set(l))
-    n.sort(l.index)
-    return n
-
-
 def new(formula):
-    """TODO: Docstring for new.
-
-    :formula: TODO
-    :returns: TODO
-
-    """
     formulapath = _get_formulapath(formula)
     if not os.path.exists(formulapath):
         formuladic = {}
@@ -154,12 +142,6 @@ def new(formula):
 
 
 def delete(formula):
-    """TODO: Docstring for delete.
-
-    :formula: TODO
-    :returns: TODO
-
-    """
     formulapath = _get_formulapath(formula)
     if not os.path.exists(formulapath):
         _echo('%s does not exist!' % formula)
@@ -184,22 +166,10 @@ def show_list():
 
 
 def edit(formula):
-    """TODO: Docstring for edit.
-
-    :formula: TODO
-    :returns: TODO
-
-    """
     new(formula)
 
 
 def info(formula):
-    """TODO: Docstring for info.
-
-    :formula: TODO
-    :returns: TODO
-
-    """
     formulapath = _get_formulapath(formula)
     if not os.path.exists(formulapath):
         _echo('%s does not exist!' % formula)
@@ -367,10 +337,6 @@ def config(**kwargs):
 
 
 def sync():
-    """TODO: Docstring for sync.
-    :returns: TODO
-
-    """
     # read syncfile
     syncpath = _getitem('core.syncfile')
     formulas_sync = _readlinesfromfile(syncpath)
