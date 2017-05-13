@@ -42,14 +42,28 @@ command_list = {
 command_install = {
     'help': 'install formula',
     'arguments': [
-        {'name': 'formula'}
+        {'name': 'formulas', 'nargs': '*'}
     ]
 }
 
 command_uninstall = {
     'help': 'uninstall formula',
     'arguments': [
-        {'name': 'formula'}
+        {'name': 'formulas', 'nargs': '*'}
+    ]
+}
+
+command_link = {
+    'help': 'link config file',
+    'arguments': [
+        {'name': 'formulas', 'nargs': '*'}
+    ]
+}
+
+command_unlink = {
+    'help': 'unlink config file',
+    'arguments': [
+        {'name': 'formulas', 'nargs': '*'}
     ]
 }
 
@@ -61,9 +75,26 @@ command_sync = {
 command_config = {
     'help': 'config',
     'arguments': [
-        {'name': 'item', 'nargs': '?'},
-        {'name': 'value', 'nargs': '?'},
-        {'name': '-l', 'action': 'store_true', 'help': 'show config'}
+        {'name': '-l', 'action': 'store_true', 'help': 'show config'},
+    ]
+}
+
+command_test = {
+    'help': 'test',
+    'arguments': []
+}
+
+command_zsh = {
+    'help': 'add config to .zshrc',
+    'arguments': [
+        {'name': 'formulas', 'nargs': '*'}
+    ]
+}
+
+command_unzsh = {
+    'help': 'remove config from .zshrc',
+    'arguments': [
+        {'name': 'formulas', 'nargs': '*'}
     ]
 }
 
@@ -75,8 +106,13 @@ subparser_config = {
     'list': command_list,
     'install': command_install,
     'uninstall': command_uninstall,
+    'link': command_link,
+    'unlink': command_unlink,
+    'zsh': command_zsh,
+    'unzsh': command_unzsh,
     'sync': command_sync,
     'config': command_config,
+    'test': command_test,
 }
 
 
