@@ -53,6 +53,20 @@ command_uninstall = {
     ]
 }
 
+command_link = {
+    'help': 'link config file',
+    'arguments': [
+        {'name': 'formulas', 'nargs': '*'}
+    ]
+}
+
+command_unlink = {
+    'help': 'unlink config file',
+    'arguments': [
+        {'name': 'formulas', 'nargs': '*'}
+    ]
+}
+
 command_sync = {
     'help': 'sync',
     'arguments': []
@@ -73,6 +87,8 @@ subparser_config = {
     'list': command_list,
     'install': command_install,
     'uninstall': command_uninstall,
+    'link': command_link,
+    'unlink': command_unlink,
     'sync': command_sync,
     'config': command_config,
 }

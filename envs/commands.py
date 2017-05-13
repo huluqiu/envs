@@ -16,7 +16,7 @@ DEFAULTCONFIG = {
         'formulalib': os.path.join(HOME, '.envs/formulas'),
         'syncfile': os.path.join(HOME, '.envs/envs.sync'),
         'backup': os.path.join(HOME, '.envs/backup'),
-        'localsync': os.path.join(HOME, '.envs/sync.local'),
+        'localsync': os.path.join(HOME, '.envs/envs.local'),
     }
 }
 
@@ -243,6 +243,44 @@ def info(formula):
                 _echo(description)
 
 
+def link(**kwargs):
+    for formula in kwargs['formulas']:
+        formulapath = _get_formulapath(formula)
+        if not os.path.exists(formulapath):
+            _echo('%s does not exist!' % formula)
+        else:
+            formuladic = _readformula(formulapath)
+            if not formuladic:
+                return
+            links = formuladic['link']
+            for target, source in links.items():
+                source = _absolutepath(source)
+                target = _absolutepath(target)
+                if _needlink(source, target):
+                    if os.path.exists(target):
+                        backuppath = os.path.join(_backup(), formula)
+                        os.makedirs(backuppath, exist_ok=True)
+                        backuppath = os.path.join(backuppath, os.path.basename(target))
+                        os.rename(target, backuppath)
+                    os.symlink(source, target)
+
+
+def unlink(**kwargs):
+    for formula in kwargs['formulas']:
+        formulapath = _get_formulapath(formula)
+        if not os.path.exists(formulapath):
+            _echo('%s does not exist!' % formula)
+        else:
+            formuladic = _readformula(formulapath)
+            if not formuladic:
+                return
+            links = formuladic['link']
+            for target, _ in links.items():
+                target = _absolutepath(target)
+                if os.path.islink(target):
+                    os.remove(target)
+
+
 def install(**kwargs):
     for formula in kwargs['formulas']:
         formulapath = _get_formulapath(formula)
@@ -258,6 +296,9 @@ def install(**kwargs):
             else:
                 cmds = formuladic.get('install', [])
                 _run(cmds)
+                # link config file
+                link(formulas=[formula])
+                # write to file
                 if _checkinstall(formuladic):
                     with open(_getitem('core.localsync'), 'a') as f:
                         f.write('%s\n' % formula)
@@ -265,18 +306,6 @@ def install(**kwargs):
                     if needsync:
                         with open(_getitem('core.syncfile'), 'a') as f:
                             f.write('%s\n' % formula)
-            # link config file
-            links = formuladic['link']
-            for target, source in links.items():
-                source = _absolutepath(source)
-                target = _absolutepath(target)
-                if _needlink(source, target):
-                    if os.path.exists(target):
-                        backuppath = os.path.join(_backup(), formula)
-                        os.makedirs(backuppath, exist_ok=True)
-                        backuppath = os.path.join(backuppath, os.path.basename(target))
-                        os.rename(target, backuppath)
-                    os.symlink(source, target)
 
 
 def uninstall(**kwargs):
@@ -294,6 +323,9 @@ def uninstall(**kwargs):
             else:
                 cmds = formuladic.get('uninstall', [])
                 _run(cmds)
+                # unlink config file
+                unlink(formulas=[formula])
+                # write to file
                 if not _checkinstall(formuladic):
                     localpath = _getitem('core.localsync')
                     formulas_local = _readlinesfromfile(localpath)
@@ -307,12 +339,6 @@ def uninstall(**kwargs):
                         formulas_sync.remove('%s\n' % formula)
                         with open(syncpath, 'w') as f:
                             f.writelines(formulas_sync)
-            # unlink config file
-            links = formuladic['link']
-            for target, _ in links.items():
-                target = _absolutepath(target)
-                if os.path.islink(target):
-                    os.remove(target)
 
 
 def config(**kwargs):
@@ -330,7 +356,7 @@ def sync():
     # read syncfile
     syncpath = _getitem('core.syncfile')
     formulas_sync = _readlinesfromfile(syncpath)
-    localpath = _getitem('core.locasync')
+    localpath = _getitem('core.localsync')
     formulas_local = _readlinesfromfile(localpath)
     # install or uninstall
     install_formulas = list(set(formulas_sync) - set(formulas_local))
