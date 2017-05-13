@@ -1,12 +1,8 @@
 import os
 import subprocess
-import sys
 import shutil
 import configparser
-if sys.version_info.major == 3:
-    from .packages import yaml3 as yaml
-else:
-    from .packages import yaml2 as yaml
+from . import tools
 
 HOME = os.getenv('HOME')
 EDITOR = os.getenv('EDITOR')
@@ -120,13 +116,12 @@ def _get_formulapath(formula):
 
 
 def _readformula(formulapath):
-    with open(formulapath, 'r') as f:
-        try:
-            formuladic = yaml.load(f)
-        except yaml.ScannerError as e:
-            _echo(e)
-        else:
-            return formuladic
+    try:
+        formuladic = tools.yamlload(formulapath)
+    except Exception as e:
+        _echo(e)
+    else:
+        return formuladic
 
 
 def _getformulaname(filename):
@@ -179,8 +174,10 @@ def new(formula):
     if not os.path.exists(formulapath):
         formuladic = {}
         formuladic['description'] = formula
+        formuladic['check'] = []
         formuladic['install'] = []
         formuladic['uninstall'] = []
+        formuladic['link'] = []
         with open(formulapath, 'w') as f:
             yaml.dump(formuladic, f, default_flow_style=False)
     _run('%s %s' % (EDITOR, formulapath))
