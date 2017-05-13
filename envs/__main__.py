@@ -79,6 +79,25 @@ command_config = {
     ]
 }
 
+command_test = {
+    'help': 'test',
+    'arguments': []
+}
+
+command_zsh = {
+    'help': 'add config to .zshrc',
+    'arguments': [
+        {'name': 'formulas', 'nargs': '*'}
+    ]
+}
+
+command_unzsh = {
+    'help': 'remove config from .zshrc',
+    'arguments': [
+        {'name': 'formulas', 'nargs': '*'}
+    ]
+}
+
 subparser_config = {
     'new': command_new,
     'delete': command_delete,
@@ -89,8 +108,11 @@ subparser_config = {
     'uninstall': command_uninstall,
     'link': command_link,
     'unlink': command_unlink,
+    'zsh': command_zsh,
+    'unzsh': command_unzsh,
     'sync': command_sync,
     'config': command_config,
+    'test': command_test,
 }
 
 
