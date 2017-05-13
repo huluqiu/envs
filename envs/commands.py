@@ -8,11 +8,10 @@ EDITOR = os.getenv('EDITOR')
 CONFIGPATH = os.path.join(HOME, '.envs.conf')
 ZSHRCPATH = os.path.join(HOME, '.zshrc')
 ENVSLIB = os.path.join(HOME, '.envs')
+SYNCFILE = 'envs.sync'
 DEFAULTCONFIG = {
     'core': {
         'formulalib': os.path.join(ENVSLIB, 'formulas'),
-        'backup': os.path.join(ENVSLIB, 'backup'),
-        'localsync': os.path.join(ENVSLIB, 'envs.local'),
         'configlib': os.path.join(ENVSLIB, 'configlib'),
     }
 }
@@ -192,13 +191,18 @@ def link(**kwargs):
             formuladic = _readformula(formulapath)
             if not formuladic:
                 return
+            if not _checkinstall(formuladic):
+                return
+            configlib = tools.absolutepath(_getitem('core.configlib'))
+            workpath = os.path.join(configlib, formula)
             links = formuladic.get('link', {})
             for target, source in links.items():
-                source = tools.absolutepath(source)
                 target = tools.absolutepath(target)
+                if source.startswith('.'):
+                    source = os.path.join(workpath, os.path.basename(source))
                 if _needlink(source, target):
                     if os.path.exists(target):
-                        backuppath = os.path.join(_path('core.backup'), formula)
+                        backuppath = os.path.join(ENVSLIB, 'backup')
                         os.makedirs(backuppath, exist_ok=True)
                         backuppath = os.path.join(backuppath, os.path.basename(target))
                         os.rename(target, backuppath)
@@ -213,6 +217,8 @@ def unlink(**kwargs):
         else:
             formuladic = _readformula(formulapath)
             if not formuladic:
+                return
+            if not _checkinstall(formuladic):
                 return
             links = formuladic.get('link', {})
             for target, _ in links.items():
@@ -230,14 +236,26 @@ def zsh(**kwargs):
             formuladic = _readformula(formulapath)
             if not formuladic:
                 return
+            if not _checkinstall(formuladic):
+                return
             zshconfigs = formuladic.get('zsh', [])
             zshconfigs = list(map(lambda n: n + '\n', zshconfigs))
-            zshlib = _path('core.zshlib')
-            formulazshrc = os.path.join(zshlib, '%s.zshrc' % formula)
+            configlib = tools.absolutepath(_getitem('core.configlib'))
+            workpath = os.path.join(configlib, formula)
+            formulazshrc = os.path.join(workpath, '%s.zshrc' % formula)
             with open(formulazshrc, 'w') as f:
                 f.writelines(zshconfigs)
-            with open(ZSHRCPATH, 'a') as f:
-                f.write('source %s\n' % formulazshrc)
+            content = 'source %s\n' % formulazshrc
+            envszshrc = os.path.join(ENVSLIB, 'envs.zshrc')
+            if not os.path.exists(envszshrc):
+                zshlist = []
+            else:
+                with open(envszshrc, 'r') as f:
+                    zshlist = f.readlines()
+            if content not in zshlist:
+                zshlist.append(content)
+                with open(envszshrc, 'w') as f:
+                    f.writelines(zshlist)
 
 
 def unzsh(**kwargs):
@@ -249,19 +267,23 @@ def unzsh(**kwargs):
             formuladic = _readformula(formulapath)
             if not formuladic:
                 return
-            zshlib = _path('core.zshlib')
-            formulazshrc = os.path.join(zshlib, '%s.zshrc' % formula)
-            if os.path.exists(formulazshrc):
-                os.remove(formulazshrc)
-            content = 'source %s\n' % formulazshrc
-            with open(ZSHRCPATH, 'r') as f:
+            if not _checkinstall(formuladic):
+                return
+            configlib = tools.absolutepath(_getitem('core.configlib'))
+            workpath = os.path.join(configlib, formula)
+            formulazshrc = os.path.join(workpath, '%s.zshrc' % formula)
+            envszshrc = os.path.join(ENVSLIB, 'envs.zshrc')
+            if not os.path.exists(envszshrc):
+                return
+            with open(envszshrc, 'r') as f:
                 zshrc = f.readlines()
+            content = 'source %s\n' % formulazshrc
             try:
                 zshrc.remove(content)
             except ValueError:
                 return
             else:
-                with open(ZSHRCPATH, 'w') as f:
+                with open(envszshrc, 'w') as f:
                     f.writelines(zshrc)
 
 
@@ -274,23 +296,25 @@ def install(**kwargs):
             formuladic = _readformula(formulapath)
             if not formuladic:
                 return
-            # run install cmds
             if _checkinstall(formuladic):
                 _echo('%s already installed' % formula)
             else:
+                # run install cmds
                 cmds = formuladic.get('install', [])
                 tools.runshell(cmds)
+                configlib = tools.absolutepath(_getitem('core.configlib'))
+                os.makedirs(os.path.join(configlib, formula), exist_ok=True)
                 # link config file
                 link(formulas=[formula])
                 # zsh
                 zsh(formulas=[formula])
                 # write to sync file
                 if _checkinstall(formuladic):
-                    with open(_getitem('core.localsync'), 'a') as f:
+                    with open(os.path.join(ENVSLIB, 'envs.local'), 'a') as f:
                         f.write('%s\n' % formula)
                     needsync = kwargs.get('sync', True)
                     if needsync:
-                        with open(_getitem('core.syncfile'), 'a') as f:
+                        with open(os.path.join(configlib, SYNCFILE), 'a') as f:
                             f.write('%s\n' % formula)
 
 
@@ -303,30 +327,33 @@ def uninstall(**kwargs):
             formuladic = _readformula(formulapath)
             if not formuladic:
                 return
-            # run uninstall cmds
             if not _checkinstall(formuladic):
                 _echo('%s does not installed' % formula)
             else:
-                cmds = formuladic.get('uninstall', [])
-                tools.runshell(cmds)
-                # unlink config file
-                unlink(formulas=[formula])
                 # unzsh
                 unzsh(formulas=[formula])
+                # unlink config file
+                unlink(formulas=[formula])
+                # run uninstall cmds
+                cmds = formuladic.get('uninstall', [])
+                tools.runshell(cmds)
                 # write to sync file
                 if not _checkinstall(formuladic):
-                    localpath = _getitem('core.localsync')
+                    localpath = os.path.join(ENVSLIB, 'envs.local')
                     formulas_local = _readlinesfromfile(localpath)
                     formulas_local.remove('%s\n' % formula)
                     with open(localpath, 'w') as f:
                         f.writelines(formulas_local)
                     needsync = kwargs.get('sync', True)
                     if needsync:
-                        syncpath = _getitem('core.syncfile')
+                        configlib = tools.absolutepath(_getitem('core.configlib'))
+                        syncpath = os.path.join(configlib, SYNCFILE)
                         formulas_sync = _readlinesfromfile(syncpath)
-                        formulas_sync.remove('%s\n' % formula)
-                        with open(syncpath, 'w') as f:
-                            f.writelines(formulas_sync)
+                        formula = formula + '\n'
+                        if formula in formulas_sync:
+                            formulas_sync.remove(formula)
+                            with open(syncpath, 'w') as f:
+                                f.writelines(formulas_sync)
 
 
 def config(**kwargs):
@@ -338,9 +365,10 @@ def config(**kwargs):
 
 def sync():
     # read syncfile
-    syncpath = _getitem('core.syncfile')
+    configlib = tools.absolutepath(_getitem('core.configlib'))
+    syncpath = os.path.join(configlib, SYNCFILE)
     formulas_sync = _readlinesfromfile(syncpath)
-    localpath = _getitem('core.localsync')
+    localpath = os.path.join(ENVSLIB, 'envs.local')
     formulas_local = _readlinesfromfile(localpath)
     # install or uninstall
     install_formulas = list(set(formulas_sync) - set(formulas_local))
@@ -358,4 +386,5 @@ def sync():
 
 
 def test():
-    tools.runshell('zsh -c "source ~/.zshrc"')
+    configlib = tools.absolutepath(_getitem('core.configlib'))
+    _echo(configlib)
