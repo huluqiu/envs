@@ -7,7 +7,7 @@ HOME = os.getenv('HOME')
 EDITOR = os.getenv('EDITOR')
 ZSHRCPATH = os.path.join(HOME, '.zshrc')
 ENVSLIB = os.path.join(HOME, '.envs')
-CONFIGPATH = os.path.join(ENVSLIB, '.envs.conf')
+CONFIGPATH = os.path.join(ENVSLIB, 'envs.conf')
 SYNCFILE = 'envs.sync'
 DEFAULTCONFIG = {
     'core': {
@@ -77,6 +77,13 @@ def _path(item):
     if not os.path.exists(path):
         os.makedirs(path, exist_ok=True)
     return path
+
+
+def _workspace(formula):
+    configlib = tools.absolutepath(_getitem('core.configlib'))
+    ws = os.path.join(configlib, 'configs', formula)
+    os.makedirs(ws, exist_ok=True)
+    return ws
 
 
 def _get_formulapath(formula):
@@ -190,8 +197,7 @@ def link(**kwargs):
             return
         if not _checkinstall(formuladic):
             return
-        configlib = tools.absolutepath(_getitem('core.configlib'))
-        workpath = os.path.join(configlib, formula)
+        workpath = _workspace(formula)
         links = formuladic.get('link', {})
         for target, source in links.items():
             target = tools.absolutepath(target)
@@ -229,8 +235,7 @@ def zsh(**kwargs):
             return
         zshconfigs = formuladic.get('zsh', [])
         zshconfigs = list(map(lambda n: n + '\n', zshconfigs))
-        configlib = tools.absolutepath(_getitem('core.configlib'))
-        workpath = os.path.join(configlib, formula)
+        workpath = _workspace(formula)
         formulazshrc = os.path.join(workpath, '%s.zshrc' % formula)
         with open(formulazshrc, 'w') as f:
             f.writelines(zshconfigs)
@@ -254,8 +259,7 @@ def unzsh(**kwargs):
             return
         if not _checkinstall(formuladic):
             return
-        configlib = tools.absolutepath(_getitem('core.configlib'))
-        workpath = os.path.join(configlib, formula)
+        workpath = _workspace(formula)
         formulazshrc = os.path.join(workpath, '%s.zshrc' % formula)
         envszshrc = os.path.join(ENVSLIB, 'envs.zshrc')
         if not os.path.exists(envszshrc):
@@ -283,8 +287,6 @@ def install(**kwargs):
             # run install cmds
             cmds = formuladic.get('install', [])
             tools.runshell(cmds)
-            configlib = tools.absolutepath(_getitem('core.configlib'))
-            os.makedirs(os.path.join(configlib, formula), exist_ok=True)
             # link config file
             link(formulas=[formula])
             # zsh
@@ -295,6 +297,7 @@ def install(**kwargs):
                     f.write('%s\n' % formula)
                 needsync = kwargs.get('sync', True)
                 if needsync:
+                    configlib = tools.absolutepath(_getitem('core.configlib'))
                     with open(os.path.join(configlib, SYNCFILE), 'a') as f:
                         f.write('%s\n' % formula)
 
