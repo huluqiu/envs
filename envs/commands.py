@@ -199,17 +199,29 @@ def link(**kwargs):
             return
         workpath = _workspace(formula)
         links = formuladic.get('link', {})
-        for target, source in links.items():
+        for source, target in links.items():
             target = tools.absolutepath(target)
             if source.startswith('.'):
                 source = os.path.join(workpath, os.path.basename(source))
+            backuplib = os.path.join(ENVSLIB, 'backup', formula)
+            os.makedirs(backuplib, exist_ok=True)
+            backup_from, backup_to = None, None
+            migrate_from, migrate_to = None, None
             if _needlink(source, target):
                 if os.path.exists(target):
-                    backuppath = os.path.join(ENVSLIB, 'backup')
-                    os.makedirs(backuppath, exist_ok=True)
-                    backuppath = os.path.join(backuppath, os.path.basename(target))
-                    os.rename(target, backuppath)
-                os.symlink(source, target)
+                    backup_from = target
+                    backup_to = os.path.join(backuplib, os.path.basename(target))
+            elif kwargs['m']:
+                if os.path.exists(source):
+                    backup_from = source,
+                    backup_to = os.path.join(backuplib, os.path.basename(source))
+                if os.path.exists(target):
+                    #  TODO: 多级目录 #
+                    migrate_from = target
+                    migrate_to = source
+            tools.move(backup_from, backup_to)
+            tools.move(migrate_from, migrate_to)
+            tools.symlink(source, target)
 
 
 def unlink(**kwargs):
@@ -220,7 +232,7 @@ def unlink(**kwargs):
         if not _checkinstall(formuladic):
             return
         links = formuladic.get('link', {})
-        for target, _ in links.items():
+        for _, target in links.items():
             target = tools.absolutepath(target)
             if os.path.islink(target):
                 os.remove(target)
@@ -288,7 +300,7 @@ def install(**kwargs):
             cmds = formuladic.get('install', [])
             tools.runshell(cmds)
             # link config file
-            link(formulas=[formula])
+            link(formulas=[formula], m=False)
             # zsh
             zsh(formulas=[formula])
             # write to sync file

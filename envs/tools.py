@@ -63,3 +63,26 @@ def absolutepath(path):
     if path.startswith('~'):
         path = path.replace('~', homepath)
     return path
+
+
+def move(src, dest, exist_ok=False, cover=False):
+    if not src or not dest:
+        return
+    if not os.path.exists(src):
+        return
+    if os.path.exists(dest):
+        if exist_ok:
+            return
+        if cover:
+            os.remove(dest)
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    os.rename(src, dest)
+
+
+def symlink(src, dest):
+    if not os.path.exists(src):
+        return
+    try:
+        os.symlink(src, dest)
+    except FileNotFoundError:
+        return

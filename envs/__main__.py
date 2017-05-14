@@ -56,7 +56,8 @@ command_uninstall = {
 command_link = {
     'help': 'link config file',
     'arguments': [
-        {'name': 'formulas', 'nargs': '*'}
+        {'name': 'formulas', 'nargs': '*'},
+        {'name': '-m', 'action': 'store_true', 'help': 'migrate origin file to workspace'}
     ]
 }
 
