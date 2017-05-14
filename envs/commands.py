@@ -5,9 +5,9 @@ from . import tools
 
 HOME = os.getenv('HOME')
 EDITOR = os.getenv('EDITOR')
-CONFIGPATH = os.path.join(HOME, '.envs.conf')
 ZSHRCPATH = os.path.join(HOME, '.zshrc')
 ENVSLIB = os.path.join(HOME, '.envs')
+CONFIGPATH = os.path.join(ENVSLIB, '.envs.conf')
 SYNCFILE = 'envs.sync'
 DEFAULTCONFIG = {
     'core': {
