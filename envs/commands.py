@@ -103,10 +103,12 @@ def new(formula):
     if not os.path.exists(formulapath):
         formuladic = {}
         formuladic['description'] = formula
+        formuladic['dependencies'] = []
         formuladic['check'] = []
         formuladic['install'] = []
         formuladic['uninstall'] = []
         formuladic['link'] = []
+        formuladic['zsh'] = []
         afile.write(formuladic, formulapath, ft='yaml')
     tools.runshell('%s %s' % (EDITOR, formulapath))
 

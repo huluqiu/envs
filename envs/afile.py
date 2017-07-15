@@ -1,7 +1,6 @@
 import os
 import sys
 from collections import OrderedDict
-import configparser
 if sys.version_info.major == 3:
     from .packages import yaml3 as yaml
 else:
@@ -11,11 +10,11 @@ else:
 def absolutepath(path, pwd=None, create=False):
     homepath = os.getenv('HOME')
     if path.startswith('~'):
-        path = path.replace('~', homepath)
+        path = path.replace('~', homepath, 1)
     elif path.startswith('../') and pwd:
-        path = path.replace('..', os.path.dirname(pwd))
+        path = path.replace('..', os.path.dirname(pwd), 1)
     elif path.startswith('./') and pwd:
-        path = path.replace('.', pwd)
+        path = path.replace('.', pwd, 1)
     elif path == '..':
         path = os.path.dirname(pwd)
     elif path == '.':
